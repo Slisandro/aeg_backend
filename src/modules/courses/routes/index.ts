@@ -15,7 +15,7 @@ router.post("/create", verifyRole("Admin"), async (req: Request, res: Response) 
     return res.status(201).json(courseCreated)
 })
 
-router.get("/all", verifyRole("Admin"), async (req: Request, res: Response) => {
+router.get("/all", async (req: Request, res: Response) => {
     const courses = await database.collection("courses").find().toArray();
 
     return res.status(200).json(courses)

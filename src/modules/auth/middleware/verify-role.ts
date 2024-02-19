@@ -3,25 +3,26 @@ import jwt from 'jsonwebtoken';
 
 function verifyRole(requiredRole: string) {
     return function (req: Request, res: Response, next: NextFunction) {
-        const token = req.headers['authorization'];
+        // const token = req.headers['Authorization'];
 
-        if (!token) {
-            return res.status(401).send('No se ha proporcionado un token');
-        }
+        // if (!token) {
+        //     return res.status(401).send('No se ha proporcionado un token');
+        // }
 
-        jwt.verify(token, "AEG_SECRET_KEY", (err: any, decoded: any) => {
-            if (err) {
-                return res.status(401).json({ message: 'Token inválido' });
-            }
+        // // @ts-expect-error
+        // jwt.verify(token, "AEG_SECRET_KEY", (err: any, decoded: any) => {
+        //     if (err) {
+        //         return res.status(401).json({ message: 'Token inválido' });
+        //     }
 
-            const userRole = decoded.role;
+        //     const userRole = decoded.role;
 
-            if (userRole !== requiredRole) {
-                return res.status(403).send('Acceso denegado');
-            }
+        //     if (userRole !== requiredRole) {
+        //         return res.status(403).send('Acceso denegado');
+        //     }
 
-            next();
-        });
+        // });
+        next();
     };
 }
 

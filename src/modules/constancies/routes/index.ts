@@ -25,7 +25,7 @@ router.get("/all", async (req: Request, res: Response) => {
         const allFiles: { id: string, name: string, institution: string, date: string }[] = [];
 
         files.forEach(f => {
-            const sanitizeName = f.split(".")[0];
+            const sanitizeName = f.slice(0, f.length - 5);
             const [name, institution, date] = sanitizeName.split("-");
 
             const partsDate = date.split("_");
@@ -37,7 +37,7 @@ router.get("/all", async (req: Request, res: Response) => {
                 institution,
                 date: formatDate
             })
-        })
+        });
 
         return res.status(200).json({ files: allFiles })
     })

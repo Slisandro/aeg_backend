@@ -17,7 +17,7 @@ const port = process.env.PORT || 3000;
 
 app.use(bodyParser.json());
 app.use(cors({
-    origin: "https://aeg-frontend.vercel.app"
+    origin: "*"
 }));
 
 app.use("/auth", authRouter);

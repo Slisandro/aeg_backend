@@ -15,13 +15,41 @@ import { ObjectId } from 'mongodb';
 
 const router = Express.Router();
 
+// get all files
+router.get("/all", async (req: Request, res: Response) => {
+    fs.readdir(path.join(__dirname, "../files"), (err, files) => {
+        if (err) {
+            return res.status(500).json({ message: "Ocurrió un error" })
+        }
+
+        const allFiles: { id: string, name: string, institution: string, date: string }[] = [];
+
+        files.forEach(f => {
+            const sanitizeName = f.split(".")[0];
+            const [name, institution, date] = sanitizeName.split("-");
+
+            const partsDate = date.split("_");
+            const formatDate = partsDate.join("/");
+
+            allFiles.push({
+                id: f,
+                name,
+                institution,
+                date: formatDate
+            })
+        })
+
+        return res.status(200).json({ files: allFiles })
+    })
+})
+
 // download constancies file
-router.get("/download/:invoice", async (req: Request, res: Response) => {
-    const { invoice } = req.params;
+router.get("/download/:id", async (req: Request, res: Response) => {
+    const { id } = req.params;
 
     res.download(
-        path.join(__dirname, "../files/folio-" + invoice + ".docx"),
-        "folio-" + invoice + ".docx",
+        path.join(__dirname, "../files/" + id),
+        id,
         (err: any) => console.log({ err })
     );
 })
@@ -49,19 +77,19 @@ router.post("/create", async (req: Request, res: Response) => {
                 console.error("Error al cargar archivos:", err.message);
                 return res.status(500).json({ error: "Error al leer archivo" });
             }
-            
+
             // get last number invoice
             const lastInvoice = await database.collection("invoice").findOne({ _id: new ObjectId("65cf8fa2fb856a03106e02ff") });
             let invoice = Number(lastInvoice?.number);
 
-            const titleFile = fields.curso + "-" + fields.institucion + "-" + `${dia}-${mes}-${año}` ;
+            const titleFile = fields.curso + "-" + fields.institucion + "-" + `${dia}_${mes}_${año}`;
 
             const workbook = XLSX.read(data);
             const sheet = workbook.Sheets["Participantes"];
             const participantsData = XLSX.utils.sheet_to_json(sheet);
             // read template .docx
             const template = fs.readFileSync(path.join(__dirname, "../template/constancia.docx"));
-            
+
             const buffers: string[] = [];
             const users: any[] = [];
 
@@ -117,7 +145,7 @@ router.post("/create", async (req: Request, res: Response) => {
 
             const merger: any | null = new DocxMerger({ style: "" }, buffers);
 
-            await database.collection("invoice").updateOne({ _id: new ObjectId("65cf8fa2fb856a03106e02ff") }, { $set: { number: invoice + 1 }})
+            await database.collection("invoice").updateOne({ _id: new ObjectId("65cf8fa2fb856a03106e02ff") }, { $set: { number: invoice + 1 } })
 
             await merger.save("nodebuffer", async (data: any) => {
                 return fs.writeFile(path.join(__dirname, "../files/" + titleFile + ".docx"), data, (err) => {

@@ -121,7 +121,7 @@ router.post("/create", async (req: Request, res: Response) => {
                     curp: p.Curp,
                     occupation: p["Posición"],
                     course: fields.curso,
-                    invoice: invoice + 1,
+                    invoice: invoice,
                     init_date: fields.inicio_curso,
                     finish_date: fields.fin_curso,
                     duration: fields.duracion_hrs,
@@ -164,5 +164,17 @@ router.post("/create", async (req: Request, res: Response) => {
         })
     });
 });
+
+router.post("/search", async (req: Request, res: Response) => {
+    const { type, value } = req.body;
+    const query = type === "FOLIO" ? { invoice: { $eq: Number(value) } } : { curp: { $eq: value } };
+    const data = await database.collection("constancies").find(query).toArray();
+    
+    if (data) {
+        return res.status(200).json(data)
+    } else {
+        return res.status(404).json({ data: [], message: "No hay datos" })
+    }
+})
 
 export default router;

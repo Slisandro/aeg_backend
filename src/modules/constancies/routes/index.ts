@@ -102,15 +102,15 @@ router.post("/create", async (req: Request, res: Response) => {
                     nombre: p.Nombre,
                     curp: p.Curp,
                     posicion: p["Posición"],
-                    institucion: fields.institucion,
-                    rfc: fields.rfc,
+                    institucion: fields.institucion[0],
+                    rfc: fields.rfc[0],
                     catalogo_ocupaciones: "11.2",
-                    curso: fields.curso,
+                    curso: fields.curso[0],
                     area_tematica: "2/7000",
-                    inicio_curso: fields.inicio_curso,
-                    fin_curso: fields.fin_curso,
-                    duracion_hrs: fields.duracion_hrs,
-                    representante: fields.representante,
+                    inicio_curso: fields.inicio_curso[0],
+                    fin_curso: fields.fin_curso[0],
+                    duracion_hrs: fields.duracion_hrs[0],
+                    representante: fields.representante[0],
                     fecha_emision: `${dia}-${mes}-${año}`,
                     nro_folio: invoice
                 };
@@ -120,12 +120,13 @@ router.post("/create", async (req: Request, res: Response) => {
                     name: p.Nombre,
                     curp: p.Curp,
                     occupation: p["Posición"],
-                    course: fields.curso,
+                    course: fields.curso[0],
                     invoice: invoice,
-                    init_date: fields.inicio_curso,
-                    finish_date: fields.fin_curso,
-                    duration: fields.duracion_hrs,
-                    representative: fields.representante
+                    init_date: fields.inicio_curso[0],
+                    finish_date: fields.fin_curso[0],
+                    duration: fields.duracion_hrs[0],
+                    representative: fields.representante[0],
+                    institution: fields.institucion[0]
                 });
 
                 // replace in template
@@ -145,7 +146,7 @@ router.post("/create", async (req: Request, res: Response) => {
 
             const merger: any | null = new DocxMerger({ style: "" }, buffers);
 
-            await database.collection("invoice").updateOne({ _id: new ObjectId("65cf8fa2fb856a03106e02ff") }, { $set: { number: invoice + 1 } })
+            await database.collection("invoice").updateOne({ _id: new ObjectId("65cf8fa2fb856a03106e02ff") }, { $set: { number: invoice } })
 
             await merger.save("nodebuffer", async (data: any) => {
                 return fs.writeFile(path.join(__dirname, "../files/" + titleFile + ".docx"), data, (err) => {
@@ -169,7 +170,7 @@ router.post("/search", async (req: Request, res: Response) => {
     const { type, value } = req.body;
     const query = type === "FOLIO" ? { invoice: { $eq: Number(value) } } : { curp: { $eq: value } };
     const data = await database.collection("constancies").find(query).toArray();
-    
+
     if (data) {
         return res.status(200).json(data)
     } else {

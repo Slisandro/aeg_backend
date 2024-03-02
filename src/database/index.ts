@@ -10,6 +10,6 @@ const client = new MongoClient(
         }
     });
 
-const instanceDb = () => client.db(process.env.enviroment === "testing" ? "aeg_test" : "aeg_production")
+const instanceDb = () => client.db(process.env.ENVIROMENT === "testing" ? "aeg_test" : "aeg_production")
 
 export default instanceDb();

@@ -92,7 +92,7 @@ router.post("/create", async (req: Request, res: Response) => {
 
             const buffers: string[] = [];
             const users: any[] = [];
-
+            
             // for each user
             participantsData.forEach(async (p: any) => {
 
@@ -104,9 +104,9 @@ router.post("/create", async (req: Request, res: Response) => {
                     posicion: p["Posición"],
                     institucion: fields.institucion[0],
                     rfc: fields.rfc[0],
-                    catalogo_ocupaciones: "11.2",
+                    catalogo_ocupaciones: fields.catalogo_ocupaciones[0],
                     curso: fields.curso[0],
-                    area_tematica: "2/7000",
+                    area_tematica: fields.area_tematica[0],
                     inicio_curso: fields.inicio_curso[0],
                     fin_curso: fields.fin_curso[0],
                     duracion_hrs: fields.duracion_hrs[0],

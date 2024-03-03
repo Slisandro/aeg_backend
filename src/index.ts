@@ -6,6 +6,7 @@ import cors from 'cors';
 import bodyParser from 'body-parser';
 
 import authRouter from './modules/auth/routes';
+import constanciesHakTekRouter from './modules/haktek/routes';
 import constanciesRouter from './modules/constancies/routes';
 import usersRouter from './modules/users/routes';
 import coursesRouter from './modules/courses/routes';
@@ -23,6 +24,7 @@ app.use(cors({
 }));
 
 app.use("/auth", authRouter);
+app.use("/constancies-haktek", constanciesHakTekRouter);
 app.use("/constancies", constanciesRouter);
 app.use("/users", usersRouter);
 app.use("/courses", coursesRouter);

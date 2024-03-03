@@ -26,7 +26,7 @@ router.post("/login", async (req: Request, res: Response) => {
         
         const token = jwt.sign(payload, secretKey);
 
-        return res.status(200).json({ message: "Ingreso exitoso", token: token });
+        return res.status(200).json({ message: "Ingreso exitoso", token: token, role: user.role });
     } else {
         return res.status(401).json({ message: "Contraseña incorrecta" })
     }

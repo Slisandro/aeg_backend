@@ -23,7 +23,7 @@ router.post("/login", async (req: Request, res: Response) => {
         };
 
         const secretKey = "AEG_SECRET_KEY";
-        
+
         const token = jwt.sign(payload, secretKey);
 
         return res.status(200).json({ message: "Ingreso exitoso", token: token, role: user.role });

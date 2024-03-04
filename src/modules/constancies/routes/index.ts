@@ -64,106 +64,116 @@ const año = fecha.getFullYear();
 router.post("/create", async (req: Request, res: Response) => {
     const form = formidable({});
 
-    // read the form data from the request body
-    form.parse(req, (err: any, fields: any, files: any) => {
-        // error read form data 
-        if (err) {
-            console.error("Error al cargar archivos:", err.message);
-            return res.status(500).json({ error: "Error al leer archivo" });
-        }
-        // read excel file
-        fs.readFile(files.archivoExcel[0].filepath, async (err, data) => {
+    try {
+        // read the form data from the request body
+        form.parse(req, (err: any, fields: any, files: any) => {
+            // error read form data 
             if (err) {
                 console.error("Error al cargar archivos:", err.message);
-                return res.status(500).json({ error: "Error al leer archivo" });
+                res.status(500).json({ error: "Error al leer archivo" });
+
+                return
             }
 
-            // get last number invoice
-            const lastInvoice = await database.collection("invoice").findOne({ _id: new ObjectId("65cf8fa2fb856a03106e02ff") });
-            let invoice = Number(lastInvoice?.number);
+            // read excel file
+            fs.readFile(files.archivoExcel[0].filepath, async (err, data) => {
+                if (err) {
+                    console.error("Error al cargar archivos:", err.message);
+                    res.status(500).json({ error: "Error al leer archivo" });
 
-            const titleFile = fields.curso + "-" + fields.institucion + "-" + `${dia}_${mes}_${año}`;
+                    return
+                }
 
-            const workbook = XLSX.read(data);
-            const sheet = workbook.Sheets["Participantes"];
-            const participantsData = XLSX.utils.sheet_to_json(sheet);
-            // read template .docx
-            const template = fs.readFileSync(path.join(__dirname, "../template/constancia.docx"));
+                // get last number invoice
+                const lastInvoice = await database.collection("invoice").findOne({ _id: new ObjectId("65cf8fa2fb856a03106e02ff") });
+                let invoice = Number(lastInvoice?.number);
 
-            const buffers: string[] = [];
-            const users: any[] = [];
-            
-            // for each user
-            participantsData.forEach(async (p: any) => {
+                const titleFile = fields.curso + "-" + fields.institucion + "-" + `${dia}_${mes}_${año}`;
 
-                const zip = new PizZip(template);
-                const doc = new DocxTemplater(zip);
-                const user = {
-                    nombre: p.Nombre,
-                    curp: p.Curp,
-                    posicion: p["Posición"],
-                    institucion: fields.institucion[0],
-                    rfc: fields.rfc[0],
-                    catalogo_ocupaciones: fields.catalogo_ocupaciones[0],
-                    curso: fields.curso[0],
-                    area_tematica: fields.area_tematica[0],
-                    inicio_curso: fields.inicio_curso[0],
-                    fin_curso: fields.fin_curso[0],
-                    duracion_hrs: fields.duracion_hrs[0],
-                    representante: fields.representante[0],
-                    fecha_emision: `${dia}-${mes}-${año}`,
-                    nro_folio: invoice
-                };
+                const workbook = XLSX.read(data);
+                const sheet = workbook.Sheets["Participantes"];
+                const participantsData = XLSX.utils.sheet_to_json(sheet);
+                // read template .docx
+                const template = fs.readFileSync(path.join(__dirname, "../template/constancia.docx"));
 
-                // add user in users array
-                users.push({
-                    name: p.Nombre,
-                    curp: p.Curp,
-                    occupation: p["Posición"],
-                    course: fields.curso[0],
-                    invoice: invoice,
-                    init_date: fields.inicio_curso[0],
-                    finish_date: fields.fin_curso[0],
-                    duration: fields.duracion_hrs[0],
-                    representative: fields.representante[0],
-                    institution: fields.institucion[0]
-                });
+                const buffers: string[] = [];
+                const users: any[] = [];
 
-                // replace in template
-                doc.render(user);
+                // for each user
+                participantsData.forEach(async (p: any) => {
 
-                // increment invoice
-                invoice = invoice + 1;
+                    const zip = new PizZip(template);
+                    const doc = new DocxTemplater(zip);
+                    const user = {
+                        nombre: p.Nombre,
+                        curp: p.Curp,
+                        posicion: p["Posición"],
+                        institucion: fields.institucion[0],
+                        rfc: fields.rfc[0],
+                        catalogo_ocupaciones: fields.catalogo_ocupaciones[0],
+                        curso: fields.curso[0],
+                        area_tematica: fields.area_tematica[0],
+                        inicio_curso: fields.inicio_curso[0],
+                        fin_curso: fields.fin_curso[0],
+                        duracion_hrs: fields.duracion_hrs[0],
+                        representante: fields.representante[0],
+                        fecha_emision: `${dia}-${mes}-${año}`,
+                        nro_folio: invoice
+                    };
 
-                const docBuf = doc.getZip().generate({
-                    type: "nodebuffer",
-                    compression: "DEFLATE",
+                    // add user in users array
+                    users.push({
+                        name: p.Nombre,
+                        curp: p.Curp,
+                        occupation: p["Posición"],
+                        course: fields.curso[0],
+                        invoice: invoice,
+                        init_date: fields.inicio_curso[0],
+                        finish_date: fields.fin_curso[0],
+                        duration: fields.duracion_hrs[0],
+                        representative: fields.representante[0],
+                        institution: fields.institucion[0]
+                    });
+
+                    // replace in template
+                    doc.render(user);
+
+                    // increment invoice
+                    invoice = invoice + 1;
+
+                    const docBuf = doc.getZip().generate({
+                        type: "nodebuffer",
+                        compression: "DEFLATE",
+                    })
+
+                    // add template for buffers array
+                    buffers.push(docBuf.toString("binary"));
                 })
 
-                // add template for buffers array
-                buffers.push(docBuf.toString("binary"));
-            })
+                const merger: any | null = new DocxMerger({ style: "" }, buffers);
 
-            const merger: any | null = new DocxMerger({ style: "" }, buffers);
+                await database.collection("invoice").updateOne({ _id: new ObjectId("65cf8fa2fb856a03106e02ff") }, { $set: { number: invoice } })
 
-            await database.collection("invoice").updateOne({ _id: new ObjectId("65cf8fa2fb856a03106e02ff") }, { $set: { number: invoice } })
-
-            await merger.save("nodebuffer", async (data: any) => {
-                return fs.writeFile(path.join(__dirname, "../files/" + titleFile + ".docx"), data, (err) => {
-                    if (err) {
-                        return res.status(500).json({ error: "Error al leer archivo" });
-                    }
+                await merger.save("nodebuffer", async (data: any) => {
+                    return fs.writeFile(path.join(__dirname, "../files/" + titleFile + ".docx"), data, (err) => {
+                        if (err) {
+                            return res.status(500).json({ error: "Error al leer archivo" });
+                        }
+                    });
                 });
-            });
 
-            await database.collection("constancies").insertMany(users);
+                await database.collection("constancies").insertMany(users);
 
-            return res.status(201).json({
-                message: "Archivo creado exitosamente",
-                title: titleFile
+                return res.status(201).json({
+                    message: "Archivo creado exitosamente",
+                    title: titleFile
+                })
             })
-        })
-    });
+        });
+    } catch (e) {
+        console.log(e)
+        res.status(500).json(e);
+    }
 });
 
 router.post("/search", async (req: Request, res: Response) => {

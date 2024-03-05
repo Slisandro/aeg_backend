@@ -6,7 +6,7 @@ import cors from 'cors';
 import bodyParser from 'body-parser';
 
 import authRouter from './modules/auth/routes';
-import constanciesHakTekRouter from './modules/haktek/routes';
+// import constanciesHakTekRouter from './modules/haktek/routes';
 import constanciesRouter from './modules/constancies/routes';
 import usersRouter from './modules/users/routes';
 import coursesRouter from './modules/courses/routes';
@@ -18,13 +18,13 @@ const port = process.env.PORT || 3000;
 
 app.use(bodyParser.json());
 app.use(cors({
-    origin: "*",
+    origin: ["https://aeg-frontend.vercel.app", "http://localhost:5173"],
     methods: "GET, POST, PUT, DELETE",
     credentials: true
 }));
 
 app.use("/auth", authRouter);
-app.use("/constancies-haktek", constanciesHakTekRouter);
+// app.use("/constancies-haktek", constanciesHakTekRouter);
 app.use("/constancies", constanciesRouter);
 app.use("/users", usersRouter);
 app.use("/courses", coursesRouter);

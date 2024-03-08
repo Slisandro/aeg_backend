@@ -69,19 +69,12 @@ router.post("/create", async (req: Request, res: Response) => {
         form.parse(req, (err: any, fields: any, files: any) => {
             // error read form data 
             if (err) {
-                console.error("Error al cargar archivos:", err.message);
-                res.status(500).json({ error: "Error al leer archivo" });
-
-                return
+                console.debug("Error al parsear archivo:", err);
             }
-
             // read excel file
             fs.readFile(files.archivoExcel[0].filepath, async (err, data) => {
                 if (err) {
-                    console.error("Error al cargar archivos:", err.message);
-                    res.status(500).json({ error: "Error al leer archivo" });
-
-                    return
+                    console.debug("Error al leer archivo:", err);
                 }
 
                 // get last number invoice
@@ -91,7 +84,7 @@ router.post("/create", async (req: Request, res: Response) => {
                 const titleFile = fields.curso + "-" + fields.institucion + "-" + `${dia}_${mes}_${año}`;
 
                 const workbook = XLSX.read(data);
-                const sheet = workbook.Sheets["Participantes"];
+                const sheet = workbook.Sheets["Hoja 1"];
                 const participantsData = XLSX.utils.sheet_to_json(sheet);
                 // read template .docx
                 const template = fs.readFileSync(path.join(__dirname, "../template/constancia.docx"));
@@ -101,7 +94,6 @@ router.post("/create", async (req: Request, res: Response) => {
 
                 // for each user
                 participantsData.forEach(async (p: any) => {
-
                     const zip = new PizZip(template);
                     const doc = new DocxTemplater(zip);
                     const user = {
@@ -157,7 +149,7 @@ router.post("/create", async (req: Request, res: Response) => {
                 await merger.save("nodebuffer", async (data: any) => {
                     return fs.writeFile(path.join(__dirname, "../files/" + titleFile + ".docx"), data, (err) => {
                         if (err) {
-                            return res.status(500).json({ error: "Error al leer archivo" });
+                            console.debug("Error al crear archivo", err)
                         }
                     });
                 });
@@ -171,7 +163,6 @@ router.post("/create", async (req: Request, res: Response) => {
             })
         });
     } catch (e) {
-        console.log(e)
         res.status(500).json(e);
     }
 });

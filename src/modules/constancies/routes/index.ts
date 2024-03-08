@@ -15,6 +15,19 @@ import { ObjectId } from 'mongodb';
 
 const router = Express.Router();
 
+const createFilesFolder = () => {
+    fs.mkdir(path.join(__dirname, "../files"), (err) => {
+        if (err) {
+          console.error("Error creando directorio:", err);
+          return;
+        }
+      
+        console.log("Directorio creado exitosamente");
+      });
+};
+
+createFilesFolder();
+
 // get all files
 router.get("/all", async (req: Request, res: Response) => {
     const files = fs.readdirSync(path.join(__dirname, "../"));

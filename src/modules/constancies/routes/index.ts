@@ -18,7 +18,6 @@ const router = Express.Router();
 // get all files
 router.get("/all", async (req: Request, res: Response) => {
     try {
-        console.debug("#####", __dirname, path.join(__dirname, "../files"))
         fs.readdir(path.join(__dirname, "../files"), (err, files) => {
             if (err) {
                 console.debug("Error al leer archivos: ", err);
@@ -159,8 +158,8 @@ router.post("/create", async (req: Request, res: Response) => {
                 await merger.save("nodebuffer", async (data: any) => {
                     const fileName = titleFile + ".docx";
 
-                    const packer = new Packer();
-                    const mimeType = await packer.detectContentType(data); // Get correct mime-type
+                    // const packer = new Packer();
+                    const mimeType = "nodebuffer" // Get correct mime-type
 
                     res.setHeader('Content-Type', mimeType);
                     res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);

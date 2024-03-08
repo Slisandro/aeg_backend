@@ -159,7 +159,7 @@ router.post("/create", async (req: Request, res: Response) => {
                     const fileName = titleFile + ".docx";
 
                     // const packer = new Packer();
-                    const mimeType = "nodebuffer" // Get correct mime-type
+                    const mimeType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document" // Get correct mime-type
 
                     res.setHeader('Content-Type', mimeType);
                     res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);

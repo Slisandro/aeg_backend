@@ -19,7 +19,7 @@ const router = Express.Router();
 router.get("/all", async (req: Request, res: Response) => {
     fs.readdir(path.join(__dirname, "../files"), (err, files) => {
         if (err) {
-            return res.status(500).json({ message: "Ocurrió un error" })
+            console.debug("Error al leer archivos: ", err);
         }
 
         const allFiles: { id: string, name: string, institution: string, date: string }[] = [];

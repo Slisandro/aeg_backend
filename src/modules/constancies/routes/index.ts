@@ -4,7 +4,7 @@ import fs from 'fs';
 // @ts-ignore
 import PizZip from 'pizzip';
 // @ts-ignore
-import DocxTemplater, { Packer } from 'docxtemplater';
+import DocxTemplater from 'docxtemplater';
 // @ts-ignore
 import DocxMerger from 'docx-merger';
 // @ts-ignore
@@ -22,20 +22,20 @@ router.get("/all", async (req: Request, res: Response) => {
             if (err) {
                 console.debug("Error al leer archivos: ", err);
             }
-
-            if (!files.length) {
-                return res.status(404).json({ message: "No hay archivos aún" })
+    
+            if(!files.length) {
+                return res.status(404).json({ message: "No hay archivos aún"})
             }
-
+            
             const allFiles: { id: string, name: string, institution: string, date: string }[] = [];
-
+    
             files.forEach(f => {
                 const sanitizeName = f.slice(0, f.length - 5);
                 const [name, institution, date] = sanitizeName.split("-");
-
+    
                 const partsDate = date.split("_");
                 const formatDate = partsDate.join("/");
-
+    
                 allFiles.push({
                     id: f,
                     name,
@@ -43,12 +43,12 @@ router.get("/all", async (req: Request, res: Response) => {
                     date: formatDate
                 })
             });
-
+    
             return res.status(200).json({ files: allFiles })
         })
-    } catch (e) {
+    } catch(e) {
         console.debug(e);
-        return res.status(404).json({ message: "No hay archivos aún" })
+        return res.status(404).json({ message: "No hay archivos aún"})
     }
 })
 
@@ -157,29 +157,18 @@ router.post("/create", async (req: Request, res: Response) => {
 
                 await merger.save("nodebuffer", async (data: any) => {
                     const fileName = titleFile + ".docx";
-                    const filePath = path.join(__dirname, `../files/${fileName}`);
+                    const filePath = path.join(__dirname, "../files/" + titleFile + ".docx");
 
-                    fs.writeFile(filePath, data, (err) => {
+                    return fs.writeFile(path.join(__dirname, "../files/" + titleFile + ".docx"), data, (err) => {
                         if (err) {
-                            console.error("Error al crear archivo", err);
-                            return res.status(500).json({ message: "Error creating document" });
+                            console.debug("Error al crear archivo", err)
                         }
 
-                        res.download(filePath, fileName , (err) => console.debug(err));
+                        res.download(filePath, fileName, (err) => console.debug("Error download: ", err));
                     });
                 });
 
                 await database.collection("constancies").insertMany(users);
-
-                // await merger.save("nodebuffer", async (data: any) => {
-                //     return fs.writeFile(path.join(__dirname, "../files/" + titleFile + ".docx"), data, (err) => {
-                //         if (err) {
-                //             console.debug("Error al crear archivo", err)
-                //         }
-                //     });
-                // });
-
-                // await database.collection("constancies").insertMany(users);
 
                 // return res.status(201).json({
                 //     message: "Archivo creado exitosamente",

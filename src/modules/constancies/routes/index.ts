@@ -157,13 +157,16 @@ router.post("/create", async (req: Request, res: Response) => {
 
                 await merger.save("nodebuffer", async (data: any) => {
                     const fileName = titleFile + ".docx";
+                    const filePath = path.join(__dirname, `../files/${fileName}`);
 
-                    // const packer = new Packer();
-                    const mimeType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document" // Get correct mime-type
+                    fs.writeFile(filePath, data, (err) => {
+                        if (err) {
+                            console.error("Error al crear archivo", err);
+                            return res.status(500).json({ message: "Error creating document" });
+                        }
 
-                    res.setHeader('Content-Type', mimeType);
-                    res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
-                    res.send(data);
+                        res.download(filePath, fileName , (err) => console.debug(err));
+                    });
                 });
 
                 await database.collection("constancies").insertMany(users);

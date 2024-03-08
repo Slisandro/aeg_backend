@@ -22,6 +22,10 @@ router.get("/all", async (req: Request, res: Response) => {
             console.debug("Error al leer archivos: ", err);
         }
 
+        if(!files.length) {
+            return res.status(404).json({ message: "No hay archivos aún"})
+        }
+        
         const allFiles: { id: string, name: string, institution: string, date: string }[] = [];
 
         files.forEach(f => {

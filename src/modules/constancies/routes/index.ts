@@ -84,7 +84,7 @@ router.post("/create", async (req: Request, res: Response) => {
                 const titleFile = fields.curso + "-" + fields.institucion + "-" + `${dia}_${mes}_${año}`;
 
                 const workbook = XLSX.read(data);
-                const sheet = workbook.Sheets["Hoja 1"];
+                const sheet = workbook.Sheets["Participantes"];
                 const participantsData = XLSX.utils.sheet_to_json(sheet);
                 // read template .docx
                 const template = fs.readFileSync(path.join(__dirname, "../template/constancia.docx"));

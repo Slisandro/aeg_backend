@@ -18,7 +18,7 @@ const router = Express.Router();
 // get all files
 router.get("/all", async (req: Request, res: Response) => {
     try {
-        console.debug("#####", path.join(__dirname, "../files"))
+        console.debug("#####", __dirname, path.join(__dirname, "../files"))
         fs.readdir(path.join(__dirname, "../files"), (err, files) => {
             if (err) {
                 console.debug("Error al leer archivos: ", err);

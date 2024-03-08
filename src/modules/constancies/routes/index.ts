@@ -18,12 +18,12 @@ const router = Express.Router();
 const createFilesFolder = () => {
     fs.mkdir(path.join(__dirname, "../files"), (err) => {
         if (err) {
-          console.error("Error creando directorio:", err);
-          return;
+            console.error("Error creando directorio:", err);
+            return;
         }
-      
+
         console.log("Directorio creado exitosamente");
-      });
+    });
 };
 
 createFilesFolder();
@@ -36,8 +36,8 @@ router.get("/all", async (req: Request, res: Response) => {
                 console.debug("Error al leer archivos: ", err);
             }
 
-            if(!files.length) {
-                return res.status(404).json({ message: "No hay archivos aún"})
+            if (!files.length) {
+                return res.status(404).json({ message: "No hay archivos aún" })
             }
 
             const allFiles: { id: string, name: string, institution: string, date: string }[] = [];
@@ -59,9 +59,9 @@ router.get("/all", async (req: Request, res: Response) => {
 
             return res.status(200).json({ files: allFiles })
         })
-    } catch(e) {
+    } catch (e) {
         console.debug(e);
-        return res.status(404).json({ message: "No hay archivos aún"})
+        return res.status(404).json({ message: "No hay archivos aún" })
     }
 })
 
@@ -168,25 +168,18 @@ router.post("/create", async (req: Request, res: Response) => {
 
                 await database.collection("invoice").updateOne({ _id: new ObjectId("65cf8fa2fb856a03106e02ff") }, { $set: { number: invoice } })
 
-                await merger.save("nodebuffer", async (data: any) => {
-                    const fileName = titleFile + ".docx";
-                    const filePath = path.join(__dirname, "../files/" + titleFile + ".docx");
-
-                    return fs.writeFile(path.join(__dirname, "../files/" + titleFile + ".docx"), data, (err) => {
-                        if (err) {
-                            console.debug("Error al crear archivo", err)
-                        }
-
-                        res.download(filePath, fileName, (err) => console.debug("Error download: ", err));
-                    });
-                });
+                await merger.save("nodebuffer", async (data: any) => fs.writeFile(path.join(__dirname, "../files/" + titleFile + ".docx"), data, (err) => {
+                    if (err) {
+                        console.debug("Error al crear archivo", err)
+                    }
+                }));
 
                 await database.collection("constancies").insertMany(users);
 
-                // return res.status(201).json({
-                //     message: "Archivo creado exitosamente",
-                //     title: titleFile
-                // })
+                return res.status(201).json({
+                    message: "Archivo creado exitosamente",
+                    title: titleFile
+                })
             })
         });
     } catch (e) {

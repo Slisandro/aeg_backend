@@ -187,7 +187,8 @@ router.post("/create", async (req: Request, res: Response) => {
 
 router.post("/search", async (req: Request, res: Response) => {
     const { type, value } = req.body;
-    const query = { curp: { $eq: value }} 
+    const query = { invoice: { $eq: Number(value) } };
+        // { curp: { $eq: value }} 
         // type === "FOLIO" ? { invoice: { $eq: Number(value) } } : { curp: { $eq: value } };
     const data = await database.collection("constancies").find(query).toArray();
 

@@ -1,6 +1,7 @@
 import Express, { Request, Response } from 'express';
 import formidable from 'formidable';
 import fs from 'fs';
+import { mkdir } from 'fs/promises';
 // @ts-ignore
 import PizZip from 'pizzip';
 // @ts-ignore
@@ -15,18 +16,11 @@ import { ObjectId } from 'mongodb';
 
 const router = Express.Router();
 
-const createFilesFolder = () => {
+const createFilesFolder = async () => {
     try {
-        fs.mkdir(path.join(__dirname, "../files"), (err) => {
-            if (err) {
-                console.error("Error creando directorio:", err);
-                return;
-            }
-    
-            console.debug("Directorio creado exitosamente");
-        });
+        await mkdir(path.join(__dirname, "../files"));
     } catch(e) {
-        console.debug("Carpeta creada")
+        console.debug("La carpeta ya existe")
     }
 };
 
@@ -193,7 +187,8 @@ router.post("/create", async (req: Request, res: Response) => {
 
 router.post("/search", async (req: Request, res: Response) => {
     const { type, value } = req.body;
-    const query = type === "FOLIO" ? { invoice: { $eq: Number(value) } } : { curp: { $eq: value } };
+    const query = { curp: { $eq: value }} 
+        // type === "FOLIO" ? { invoice: { $eq: Number(value) } } : { curp: { $eq: value } };
     const data = await database.collection("constancies").find(query).toArray();
 
     if (data) {
@@ -201,6 +196,12 @@ router.post("/search", async (req: Request, res: Response) => {
     } else {
         return res.status(404).json({ data: [], message: "No hay datos" })
     }
+})
+
+router.get('/', async (req: Request, res: Response) => {
+    const data = database.collection("constancies")
+    const a = await data.find().toArray();
+    res.json(a);
 })
 
 export default router;

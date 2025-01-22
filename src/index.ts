@@ -18,7 +18,7 @@ const port = process.env.PORT || 3000;
 
 app.use(bodyParser.json());
 app.use(cors({
-    origin: "http://localhost:5173",
+    origin: "http://aeg-frontend.vercel.app",
     methods: "GET, POST, PUT, DELETE, OPTIONS",
     credentials: true
 }));

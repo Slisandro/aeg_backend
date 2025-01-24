@@ -17,8 +17,13 @@ const app: Express = express();
 const port = process.env.PORT || 3000;
 
 app.use(bodyParser.json());
+<<<<<<< HEAD
 app.use(cors({
     origin: ["https://aeg-frontend.vercel.app", "http://localhost:5173"],
+=======
+app.use(cors({    
+    origin: "https://aeg-frontend.vercel.app",
+>>>>>>> 7600add8505363b1db6c644b94b80834a87b520b
     methods: "GET, POST, PUT, DELETE, OPTIONS",
     credentials: true
 }));

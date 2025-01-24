@@ -112,6 +112,14 @@ router.post("/create", async (req: Request, res: Response) => {
                 const buffers: string[] = [];
                 const users: any[] = [];
 
+                // format date
+                const ano_inicio = new Date(fields.inicio_curso[0]).getFullYear();
+                const mes_inicio = new Date(fields.inicio_curso[0]).getMonth() + 1;
+                const dia_inicio = new Date(fields.inicio_curso[0]).getFullYear() + 1;
+                
+                const ano_fin = new Date(fields.fin_curso[0]).getFullYear();
+                const mes_fin = new Date(fields.fin_curso[0]).getMonth() + 1;
+                const dia_fin = new Date(fields.fin_curso[0]).getFullYear() + 1;
                 // for each user
                 participantsData.forEach(async (p: any) => {
                     const zip = new PizZip(template);
@@ -125,11 +133,14 @@ router.post("/create", async (req: Request, res: Response) => {
                         catalogo_ocupaciones: fields.catalogo_ocupaciones[0],
                         curso: fields.curso[0],
                         area_tematica: fields.area_tematica[0],
-                        inicio_curso: fields.inicio_curso[0],
-                        fin_curso: fields.fin_curso[0],
+                        ano_inicio,
+                        mes_inicio,
+                        dia_inicio,
+                        ano_fin,
+                        mes_fin,
+                        dia_fin,
                         duracion_hrs: fields.duracion_hrs[0],
                         representante: fields.representante[0],
-                        fecha_emision: `${dia}-${mes}-${año}`,
                         nro_folio: invoice
                     };
 

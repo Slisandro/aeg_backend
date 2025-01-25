@@ -115,11 +115,11 @@ router.post("/create", async (req: Request, res: Response) => {
                 // format date
                 const ano_inicio = new Date(fields.inicio_curso[0]).getFullYear();
                 const mes_inicio = new Date(fields.inicio_curso[0]).getMonth() + 1;
-                const dia_inicio = new Date(fields.inicio_curso[0]).getDate() + 1;
+                const dia_inicio = new Date(fields.inicio_curso[0]).getDate();
                 
                 const ano_fin = new Date(fields.fin_curso[0]).getFullYear();
                 const mes_fin = new Date(fields.fin_curso[0]).getMonth() + 1;
-                const dia_fin = new Date(fields.fin_curso[0]).getDate() + 1;
+                const dia_fin = new Date(fields.fin_curso[0]).getDate();
                 // for each user
                 participantsData.forEach(async (p: any) => {
                     const zip = new PizZip(template);

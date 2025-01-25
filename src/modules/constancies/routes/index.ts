@@ -115,11 +115,11 @@ router.post("/create", async (req: Request, res: Response) => {
                 // format date
                 const ano_inicio = new Date(fields.inicio_curso[0]).getFullYear();
                 const mes_inicio = new Date(fields.inicio_curso[0]).getMonth() + 1;
-                const dia_inicio = new Date(fields.inicio_curso[0]).getFullYear() + 1;
+                const dia_inicio = new Date(fields.inicio_curso[0]).getDate() + 1;
                 
                 const ano_fin = new Date(fields.fin_curso[0]).getFullYear();
                 const mes_fin = new Date(fields.fin_curso[0]).getMonth() + 1;
-                const dia_fin = new Date(fields.fin_curso[0]).getFullYear() + 1;
+                const dia_fin = new Date(fields.fin_curso[0]).getDate() + 1;
                 // for each user
                 participantsData.forEach(async (p: any) => {
                     const zip = new PizZip(template);
@@ -178,10 +178,16 @@ router.post("/create", async (req: Request, res: Response) => {
                 await database.collection("invoice").updateOne({ _id: new ObjectId("65cf8fa2fb856a03106e02ff") }, { $set: { number: invoice } })
 
                 await merger.save("nodebuffer", async (data: any) => fs.writeFile(path.join(__dirname, "../files/" + titleFile + ".docx"), data, (err) => {
-                    if (err) {
+                    if (err) {3
                         console.debug("Error al crear archivo", err)
                     }
                 }));
+
+                await database.collection("clients").insertOne({ 
+                    name: fields.institucion[0], 
+                    rfc: fields.rfc[0],
+                    representante: fields.representante[0]
+                });
 
                 await database.collection("constancies").insertMany(users);
 

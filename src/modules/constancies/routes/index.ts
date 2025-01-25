@@ -141,7 +141,7 @@ router.post("/create", async (req: Request, res: Response) => {
                         dia_fin,
                         duracion_hrs: fields.duracion_hrs[0],
                         representante: fields.representante[0],
-                        nro_folio: invoice
+                        invoice
                     };
 
                     // add user in users array
@@ -183,11 +183,11 @@ router.post("/create", async (req: Request, res: Response) => {
                     }
                 }));
 
-                await database.collection("clients").insertOne({ 
-                    name: fields.institucion[0], 
-                    rfc: fields.rfc[0],
-                    representante: fields.representante[0]
-                });
+                // await database.collection("clients").insertOne({ 
+                //     name: fields.institucion[0], 
+                //     rfc: fields.rfc[0],
+                //     representante: fields.representante[0]
+                // });
 
                 await database.collection("constancies").insertMany(users);
 

@@ -19,7 +19,7 @@ const router = Express.Router();
 const createFilesFolder = async () => {
     try {
         await mkdir(path.join(__dirname, "../files"));
-    } catch(e) {
+    } catch (e) {
         console.debug("La carpeta ya existe")
     }
 };
@@ -104,7 +104,7 @@ router.post("/create", async (req: Request, res: Response) => {
                 const titleFile = fields.curso + "-" + fields.institucion + "-" + `${dia}_${mes}_${año}`;
 
                 const workbook = XLSX.read(data);
-                const sheet = workbook.Sheets["Participantes"];
+                const sheet = workbook.Sheets[workbook.SheetNames[0]];
                 const participantsData = XLSX.utils.sheet_to_json(sheet);
                 // read template .docx
                 const template = fs.readFileSync(path.join(__dirname, "../template/constancia.docx"));
@@ -116,7 +116,7 @@ router.post("/create", async (req: Request, res: Response) => {
                 const ano_inicio = new Date(fields.inicio_curso[0]).getFullYear();
                 const mes_inicio = new Date(fields.inicio_curso[0]).getMonth() + 1;
                 const dia_inicio = fields.inicio_curso[0].slice(-2);
-                
+
                 const ano_fin = new Date(fields.fin_curso[0]).getFullYear();
                 const mes_fin = new Date(fields.fin_curso[0]).getMonth() + 1;
                 const dia_fin = fields.fin_curso[0].slice(-2);
@@ -205,8 +205,8 @@ router.post("/create", async (req: Request, res: Response) => {
 router.post("/search", async (req: Request, res: Response) => {
     const { type, value } = req.body;
     const query = { invoice: { $eq: Number(value) } };
-        // { curp: { $eq: value }} 
-        // type === "FOLIO" ? { invoice: { $eq: Number(value) } } : { curp: { $eq: value } };
+    // { curp: { $eq: value }} 
+    // type === "FOLIO" ? { invoice: { $eq: Number(value) } } : { curp: { $eq: value } };
     const data = await database.collection("constancies").find(query).toArray();
 
     if (data) {

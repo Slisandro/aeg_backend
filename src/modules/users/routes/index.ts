@@ -1,5 +1,5 @@
 import Express, { Request, Response } from 'express';
-import database from '../../../database';
+import database, { getDb } from '../../../database';
 import { ObjectId } from 'mongodb';
 import bcrypt from 'bcrypt';
 import verifyRole from '../../auth/middleware/verify-role';
@@ -8,6 +8,7 @@ const router = Express.Router();
 
 router.post("/create", async (req: Request, res: Response) => {
     const { username, password, role } = req.body;
+    const database = await getDb();
     const userCreated = await database.collection("users").insertOne({
         username,
         password: await bcrypt.hash(password, 10),
@@ -18,6 +19,7 @@ router.post("/create", async (req: Request, res: Response) => {
 })
 
 router.get("/all", verifyRole("Admin"), async (req: Request, res: Response) => {
+    const database = await getDb();
     const users = await database.collection("users").find().toArray();
 
     return res.status(200).json(users)
@@ -26,6 +28,7 @@ router.get("/all", verifyRole("Admin"), async (req: Request, res: Response) => {
 
 router.put("/:id", verifyRole("Admin"), async (req: Request, res: Response) => {
     const { id } = req.params;
+    const database = await getDb();
     const { username, password } = req.body;
 
     const user = await database.collection("users").findOne({
@@ -47,6 +50,7 @@ router.put("/:id", verifyRole("Admin"), async (req: Request, res: Response) => {
 
 router.delete("/:id", verifyRole("Admin"), async (req: Request, res: Response) => {
     const { id } = req.params;
+    const database = await getDb();
 
     const user = await database.collection("users").findOne({
         _id: new ObjectId(id)

@@ -11,7 +11,7 @@ import DocxMerger from 'docx-merger';
 // @ts-ignore
 import XLSX from 'xlsx';
 import path from 'path';
-import database from '../../../database';
+import database, { getDb } from '../../../database';
 import { ObjectId } from 'mongodb';
 
 const router = Express.Router();
@@ -74,60 +74,92 @@ router.get("/download/:id", async (req: Request, res: Response) => {
     );
 })
 
-// format date 
-const fecha = new Date();
-const dia = fecha.getDate().toString().padStart(2, "0");
-const mes = (fecha.getMonth() + 1).toString().padStart(2, "0");
-const año = fecha.getFullYear();
-
 // create constancies  
 router.post("/create", async (req: Request, res: Response) => {
     const form = formidable({});
+    const database = await getDb();
 
     try {
-        // read the form data from the request body
-        form.parse(req, (err: any, fields: any, files: any) => {
-            // error read form data 
+        form.parse(req, async (err: any, fields: any, files: any) => {
             if (err) {
                 console.debug("Error al parsear archivo:", err);
+                return res.status(400).json({ error: "Error al procesar el archivo" });
             }
-            // read excel file
-            fs.readFile(files.archivoExcel[0].filepath, async (err, data) => {
-                if (err) {
-                    console.debug("Error al leer archivo:", err);
+
+            try {
+                if (!files || !files.archivoExcel) {
+                    return res.status(400).json({ error: "No se encontró el archivo Excel" });
                 }
 
-                // get last number invoice
-                const lastInvoice = await database.collection("invoice").findOne({ _id: new ObjectId("65cf8fa2fb856a03106e02ff") });
-                let invoice = Number(lastInvoice?.number);
+                const data = await fs.promises.readFile(files.archivoExcel[0].filepath);
 
-                const titleFile = fields.curso + "-" + fields.institucion + "-" + `${dia}_${mes}_${año}`;
+                const lastInvoice = await database.collection("invoice").findOne({ 
+                    _id: new ObjectId("65cf8fa2fb856a03106e02ff") 
+                });
+                let invoice = Number(lastInvoice?.number) || 1;
+
+                const fecha = new Date();
+                const dia = fecha.getDate().toString().padStart(2, '0');
+                const mes = (fecha.getMonth() + 1).toString().padStart(2, '0');
+                const año = fecha.getFullYear();
+
+                const titleFile = fields.curso[0] + "-" + fields.institucion[0] + "-" + `${dia}_${mes}_${año}`;
+
+                console.log("📄 Título del archivo:", titleFile);
 
                 const workbook = XLSX.read(data);
+                console.log("📋 Hojas disponibles:", workbook.SheetNames);
+                
+                if (!workbook.Sheets["Participantes"]) {
+                    return res.status(400).json({ 
+                        error: "La hoja 'Participantes' no existe en el Excel",
+                        sheets: workbook.SheetNames 
+                    });
+                }
+
                 const sheet = workbook.Sheets["Participantes"];
-                const participantsData = XLSX.utils.sheet_to_json(sheet);
-                // read template .docx
+                const participantsData = XLSX.utils.sheet_to_json(sheet) as { Nombre: string; Curp: string; "Posición": string }[];
+                
+                console.log(`👥 Participantes encontrados: ${participantsData.length}`);
+
+                if (participantsData.length === 0) {
+                    return res.status(400).json({ 
+                        error: "No se encontraron participantes en la hoja 'Participantes'"
+                    });
+                }
+
                 const template = fs.readFileSync(path.join(__dirname, "../template/constancia.docx"));
 
-                const buffers: string[] = [];
+                // Almacenar cada documento como binario para docx-merger
+                const mergedDocs: string[] = [];
                 const users: any[] = [];
 
-                // format date
-                const ano_inicio = new Date(fields.inicio_curso[0]).getFullYear();
-                const mes_inicio = new Date(fields.inicio_curso[0]).getMonth() + 1;
-                const dia_inicio = fields.inicio_curso[0].slice(-2);
+                const fechaInicio = new Date(fields.inicio_curso[0]);
+                const fechaFin = new Date(fields.fin_curso[0]);
 
-                const ano_fin = new Date(fields.fin_curso[0]).getFullYear();
-                const mes_fin = new Date(fields.fin_curso[0]).getMonth() + 1;
-                const dia_fin = fields.fin_curso[0].slice(-2);
-                // for each user
-                participantsData.forEach(async (p: any) => {
+                const ano_inicio = fechaInicio.getFullYear();
+                const mes_inicio = fechaInicio.getMonth() + 1;
+                const dia_inicio = fechaInicio.getDate().toString().padStart(2, '0');
+
+                const ano_fin = fechaFin.getFullYear();
+                const mes_fin = fechaFin.getMonth() + 1;
+                const dia_fin = fechaFin.getDate().toString().padStart(2, '0');
+
+                for (const p of participantsData) {
+                    console.log(`📝 Procesando: ${p.Nombre}`);
+                    
+                    if (!p.Nombre || !p.Curp) {
+                        console.warn(`⚠️ Participante sin Nombre o Curp:`, p);
+                        continue;
+                    }
+
                     const zip = new PizZip(template);
                     const doc = new DocxTemplater(zip);
+                    
                     const user = {
                         nombre: p.Nombre,
                         curp: p.Curp,
-                        posicion: p["Posición"],
+                        posicion: p["Posición"] || "",
                         institucion: fields.institucion[0],
                         rfc: fields.rfc[0],
                         catalogo_ocupaciones: fields.catalogo_ocupaciones[0],
@@ -144,11 +176,10 @@ router.post("/create", async (req: Request, res: Response) => {
                         invoice
                     };
 
-                    // add user in users array
                     users.push({
                         name: p.Nombre,
                         curp: p.Curp,
-                        occupation: p["Posición"],
+                        occupation: p["Posición"] || "",
                         course: fields.curso[0],
                         invoice: invoice,
                         init_date: fields.inicio_curso[0],
@@ -158,55 +189,116 @@ router.post("/create", async (req: Request, res: Response) => {
                         institution: fields.institucion[0]
                     });
 
-                    // replace in template
                     doc.render(user);
-
-                    // increment invoice
+                    console.log(`📝 Datos inyectados para ${p.Nombre}:`, user);
                     invoice = invoice + 1;
 
                     const docBuf = doc.getZip().generate({
                         type: "nodebuffer",
                         compression: "DEFLATE",
-                    })
+                    });
 
-                    // add template for buffers array
-                    buffers.push(docBuf.toString("binary"));
-                })
+                    
+                    // docx-merger en este proyecto espera contenido binario (string)
+                    mergedDocs.push(docBuf.toString("binary"));
+                    
+                    console.log(`📦 Tamaño del buffer generado: ${docBuf.length} bytes`);
+                    console.log(`✅ Documento generado para: ${p.Nombre}`);
+                }
 
-                const merger: any | null = new DocxMerger({ style: "" }, buffers);
+                console.log(`📦 Total de documentos generados: ${mergedDocs.length}`);
 
-                await database.collection("invoice").updateOne({ _id: new ObjectId("65cf8fa2fb856a03106e02ff") }, { $set: { number: invoice } })
+                if (mergedDocs.length === 0) {
+                    return res.status(400).json({ 
+                        error: "No se pudo generar ningún documento"
+                    });
+                }
 
-                await merger.save("nodebuffer", async (data: any) => fs.writeFile(path.join(__dirname, "../files/" + titleFile + ".docx"), data, (err) => {
-                    if (err) {
-                        console.debug("Error al crear archivo", err)
+                const merger: any = new DocxMerger({
+                    style: 'default',
+                    pageBreak: true
+                }, mergedDocs);
+
+                const outputPath = path.join(__dirname, "../files/" + titleFile + ".docx");
+                
+                const filesDir = path.join(__dirname, "../files");
+                if (!fs.existsSync(filesDir)) {
+                    fs.mkdirSync(filesDir, { recursive: true });
+                }
+
+                // ✅ Guardar el documento final
+                await new Promise((resolve, reject) => {
+                    merger.save("nodebuffer", (data: any) => {
+                        if (!data) {
+                            reject(new Error("No se generó data"));
+                            return;
+                        }
+                        fs.writeFile(outputPath, data, (err) => {
+                            if (err) {
+                                reject(err);
+                            } else {
+                                resolve(true);
+                            }
+                        });
+                    });
+                });
+
+                console.log(`✅ Documento final creado: ${titleFile}.docx`);
+
+                // Limpiar carpeta temporal despues de generar el documento final.
+                const tempDir = path.join(__dirname, "../temp");
+                try {
+                    if (fs.existsSync(tempDir)) {
+                        const tempItems = await fs.promises.readdir(tempDir);
+                        await Promise.all(
+                            tempItems.map((item) =>
+                                fs.promises.rm(path.join(tempDir, item), { recursive: true, force: true })
+                            )
+                        );
+                        console.log("🧹 Carpeta temp limpiada correctamente");
                     }
-                }));
+                } catch (tempError) {
+                    console.warn("⚠️ No se pudo limpiar la carpeta temp:", tempError);
+                }
 
-                // await database.collection("clients").insertOne({ 
-                //     name: fields.institucion[0], 
-                //     rfc: fields.rfc[0],
-                //     representante: fields.representante[0]
-                // });
+                // Actualizar invoice
+                await database.collection("invoice").updateOne(
+                    { _id: new ObjectId("65cf8fa2fb856a03106e02ff") }, 
+                    { $set: { number: invoice } }
+                );
 
-                await database.collection("constancies").insertMany(users);
+                if (users.length > 0) {
+                    await database.collection("constancies").insertMany(users);
+                }
+
+                console.log("✅ Proceso completado exitosamente");
 
                 return res.status(201).json({
                     message: "Archivo creado exitosamente",
-                    title: titleFile
-                })
-            })
+                    title: titleFile,
+                    participants: users.length,
+                    filePath: outputPath
+                });
+
+            } catch (error) {
+                console.error("❌ Error en procesamiento:", error);
+                return res.status(500).json({ 
+                    error: "Error al procesar los documentos",
+                    details: (error as Error).message 
+                });
+            }
         });
     } catch (e) {
-        res.status(500).json(e);
+        console.error("❌ Error general:", e);
+        res.status(500).json({ error: (e as Error).message });
     }
 });
 
 router.post("/search", async (req: Request, res: Response) => {
-    const { type, value } = req.body;
+    const { value } = req.body;
+    const database = await getDb();
     const query = { invoice: { $eq: Number(value) } };
     // { curp: { $eq: value }} 
-    // type === "FOLIO" ? { invoice: { $eq: Number(value) } } : { curp: { $eq: value } };
     const data = await database.collection("constancies").find(query).toArray();
 
     if (data) {
@@ -217,6 +309,7 @@ router.post("/search", async (req: Request, res: Response) => {
 })
 
 router.get('/', async (req: Request, res: Response) => {
+    const database = await getDb();
     const data = database.collection("constancies")
     const a = await data.find().toArray();
     res.json(a);

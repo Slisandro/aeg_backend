@@ -1,5 +1,4 @@
 import { NextFunction, Request, Response } from "express";
-import jwt from 'jsonwebtoken';
 
 function verifyRole(requiredRole: string) {
     return function (req: Request, res: Response, next: NextFunction) {

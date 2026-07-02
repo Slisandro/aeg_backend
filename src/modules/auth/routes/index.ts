@@ -1,11 +1,12 @@
 import Express, { Request, Response } from 'express';
-import database from '../../../database';
+import { getDb } from '../../../database';
 import { compareSync } from 'bcrypt';
 import jwt from 'jsonwebtoken';
 
 const router = Express.Router();
 
 router.post("/login", async (req: Request, res: Response) => {
+    const database = await getDb();
     const { username, password } = req.body;
 
     const user = await database.collection("users").findOne({ username });

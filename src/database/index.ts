@@ -3,7 +3,7 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 // Usar la cadena de conexión directa
-const DIRECT_URI = "mongodb://AEG_ADMIN:actualidadenguarderia@ac-jskkgxe-shard-00-00.2nbw9ij.mongodb.net:27017,ac-jskkgxe-shard-00-01.2nbw9ij.mongodb.net:27017,ac-jskkgxe-shard-00-02.2nbw9ij.mongodb.net:27017/?ssl=true&replicaSet=atlas-s9a4pa-shard-0&authSource=admin&appName=Cluster0";
+const DIRECT_URI = process.env.DIRECT_URI
 
 const client = new MongoClient(
     DIRECT_URI,
